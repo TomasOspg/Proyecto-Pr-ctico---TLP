@@ -1,0 +1,203 @@
+::SNAKE.brik::
+
+// ===================================
+// IDENTIDAD DEL JUEGO
+// ===================================
+
+JuegoNombre -> "Serpiente Cósmica"
+Version     -> v1.0-alpha
+Desarrolladores -> Juan Mateo Mayorga Duque - Tomas Ospina Gaviria
+
+
+// ===================================
+// TABLERO PRINCIPAL
+// ===================================
+
+@Tablero {
+    tamaño: {ancho:20, alto:20}
+    color_fondo: negroEstelar
+    brillo_rejilla: neónVerde(0.2)
+    borde: {tipo:"sólido", color:"grisOscuro"}
+}
+
+// ===================================
+// GRAVEDAD / VELOCIDAD
+// ===================================
+
+@Velocidad {
+    movimiento_inicial : 0.25s   // tiempo por paso de la serpiente
+    incremento_nivel   : -0.02s  // se reduce el tiempo cada vez que sube nivel
+    velocidad_minima   : 0.05s
+}
+
+// ===================================
+// PUNTUACIÓN Y NIVELES
+// ===================================
+
+@Puntuacion [
+    cuando "comer_manzana" -> {base:10, efecto:"brillo_manzana"}
+    cuando "comer_bomba"  -> {base:-20, efecto:"explosion_pequeña"}
+]
+
+@Niveles {
+    puntos_por_nivel: 50
+    al_subir: {
+        velocidad: decremento 0.02s
+        efecto_tablero: "flash_verde"
+    }
+}
+
+// ===================================
+// OBJETOS EN EL TABLERO
+// ===================================
+
+@Objetos {
+    serpiente : {
+        color_cabeza : "verdeLima"
+        color_cuerpo : "verdeOscuro"
+        longitud_inicial : 3
+        crecimiento_por_manzana : 1
+    }
+
+    manzana : {
+        color : "rojo"
+        valor_puntos : 10
+        efecto_visual : {tipo:"destello", brillo:0.6, parpadeo:{frecuencia:2, duracion:1s}}
+    }
+
+    bomba : {
+        color : "rojoOscuro"
+        efecto_sonido : "explosion.wav"
+        daño : -20
+        efecto_visual : {tipo:"explosion", radio:2, duracion:0.5s}
+    }
+}
+
+// ===================================
+// EVENTOS
+// ===================================
+
+@Eventos { //No supe que más añadir exceptuando lo de la bomba, no hay mucho que inventar en este juego.
+
+    comer_manzana : {
+        descripcion     : "La serpiente come una manzana y crece"
+        crecimiento     : 1
+        puntos          : 10
+        efecto_visual   : {tipo:"destello", color:"rojo", duracion:0.5s, cantidad:6}
+        sonido          : "brillo_manzana.wav"
+        volumen_sonido  : 0.6
+    }
+
+    comer_bomba : {
+        descripcion     : "La serpiente toca una bomba y pierde puntos"
+        puntos          : -20
+        efecto_visual   : {tipo:"explosion", color:"rojoOscuro", duracion:0.5s, radio:2}
+        sonido          : "explosion.wav"
+        volumen_sonido  : 0.7
+        vibracion_tablero : {intensidad:2, duracion:150ms}
+    }
+
+    choque_pared : {
+        descripcion     : "La serpiente choca con la pared y termina el juego"
+        fin_juego       : true
+        efecto_visual   : {tipo:"flash", color:"rojo", duracion:0.8s}
+        sonido          : "choque.wav"
+        volumen_sonido  : 0.8
+    }
+
+    choque_cuerpo : {
+        descripcion     : "La serpiente choca con su propio cuerpo"
+        fin_juego       : true
+        efecto_visual   : {tipo:"flash", color:"naranja", duracion:0.8s}
+        sonido          : "choque.wav"
+        volumen_sonido  : 0.8
+    }
+}
+
+// ===================================
+// CONTROLES DEL JUGADOR
+// ===================================
+
+@Controles {
+    moverArriba    <= [W, ↑]
+    moverAbajo     <= [S, ↓]
+    moverIzquierda <= [A, ←]
+    moverDerecha   <= [D, →]
+    pausarJuego    <= [P]
+    reiniciarJuego <= [R]
+}
+
+@FinJuego {
+    descripcion : "Se activa cuando la serpiente choca con la pared o consigo misma"
+    condiciones : [
+        "choque_pared",
+        "choque_cuerpo"
+    ]
+    mostrar_mensaje : "¡Juego Terminado!"
+    efecto_visual : {
+        tipo      : "flash_general"
+        color     : "rojo"
+        duracion  : 1.0s
+        intensidad: 0.8
+    }
+    efecto_sonido : {
+        archivo  : "game_over.wav"
+        volumen  : 0.9
+    }
+    vibracion_tablero : {
+        intensidad: 3
+        duracion  : 300ms
+        curva     : "rebote"
+    }
+    reinicio_automatico : false
+}
+
+// ===================================
+// EFECTOS VISUALES Y SONOROS
+// ===================================
+
+@Efectos {
+
+    musica_fondo : {
+        archivo      : "snake_beat.ogg"
+        volumen      : 0.7
+        bucle        : true
+        transicion   : {tipo:"desvanecer", tiempo:2.0s}
+    }
+
+    efecto_manzana : {
+        archivo      : "brillo_manzana.wav"
+        volumen      : 0.6
+        efecto_visual: {tipo:"destello", color:"rojo", cantidad:6, duracion:0.5s}
+    }
+
+    efecto_bomba : {
+        archivo      : "explosion.wav"
+        volumen      : 0.7
+        efecto_visual: {tipo:"explosion", color:"rojoOscuro", duracion:0.5s, radio:2}
+    }
+
+    vibracion_choque : {
+        intensidad   : 2
+        duracion     : 150ms
+        curva        : "rebote"
+        direccion    : "aleatoria"
+    }
+
+    parpadeo_nivel : {
+        tipo         : "flash"
+        color        : "verde"
+        ciclos       : 3
+        velocidad    : "rapida"
+        curva        : "suavizado"
+    }
+
+    aura_tablero : {
+        tipo         : "halo"
+        color        : "verdeOscuro"
+        opacidad     : 0.2
+        pulso        : {amplitud:0.1, velocidad:5s}
+        radio        : "borde"
+    }
+
+}

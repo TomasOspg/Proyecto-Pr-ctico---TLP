@@ -1,0 +1,210 @@
+::TETRIS.brik::
+
+// ===================================
+// IDENTIDAD DEL JUEGO
+// ===================================
+JuegoNombre -> "TETRION: Carrera de Fragmentos"
+Version     -> v1.0-alpha
+Desarrolladores -> Juan Mateo Mayorga Duque - Tomas Ospina Gaviria
+
+// ===================================
+// TABLERO PRINCIPAL
+// ===================================
+
+@Tablero {
+    tamaño: {ancho:12, alto:22}
+    color_fondo: vacioProfundo
+    comportamiento_suelo: "solidificar_al_contacto"
+    brillo_rejilla: neónAzul(0.3)
+}
+
+@Gravedad {
+    intervalo_caida: 0.85s
+    aceleracion_por_nivel: 0.07s cada 1500pts
+    velocidad_maxima: 0.25s
+}
+
+// ===================================
+// PUNTUACIÓN Y NIVELES
+// ===================================
+
+@Puntuacion [
+    cuando "linea_completa" -> {
+        base: 120
+        multiplicador_cadena: [1x,2x,4x,6x]
+    }
+    cuando "cuatro_lineas"  -> {base: 400, efecto: "destello_luz"}
+    cuando "pieza_colocada" -> {base: 10}
+]
+
+@Niveles {
+    puntos_por_nivel: 1500
+    al_subir: {
+        gravedad: decremento 0.07s
+        efecto_tablero: "teal_flash"
+    }
+}
+
+// ===================================
+// PIEZAS DISPONIBLES
+// ===================================
+
+@Fragmentos {
+    barra     : {color:cyan   , patron:[ [#,#,#,#] ]}
+    bloque    : {color:ambar  , patron:[ [#,#],[#,#] ]}
+    te        : {color:violeta, patron:[ [0,#,0],[#,#,#] ]}
+    hueco     : {color:limon  , patron:[ [#,0,#],[#,#,#] ]}
+    serpiente : {color:esmeralda, patron:[ [0,#,#],[#,#,0] ]}
+    rayo      : {color:carmesí , patron:[ [#,#,0],[0,#,#] ]}
+    fantasma  : {color:plata   , patron:[ [#] ], habilidad:"caida_fantasma"}
+}
+
+ModoRotacion -> "ortogonal"
+
+// ===================================
+// EVENTOS
+// ===================================
+
+@Eventos { //Algo que se me ocurrió para hacerlo más "Original", no sé. Lo otro son los eventos de puntos.
+
+    caida_fantasma : {
+        descripcion     : "La pieza fantasma atraviesa otras piezas y se solidifica al tocar el suelo"
+        activar_sonido  : "sonido_brillo.wav"
+        volumen_sonido  : 0.6
+        efecto_visual   : {tipo:"chispas", color:"cian", duracion:1.0s, cantidad:8, velocidad:"media"}
+        velocidad_caida : "doble"
+        duracion_efecto : 1.2s
+    }
+
+    rayo_cosmico : {
+        descripcion     : "Cada 60s elimina una columna aleatoria"
+        intervalo       : 60s
+        columnas_afectadas : 1
+        efecto_visual   : {tipo:"rayo", color:"violeta", brillo:0.8, expansion:1.5, duracion:0.5s}
+        sonido          : "rayo_cosmico.wav"
+        volumen_sonido  : 0.7
+        shake_tablero   : {intensidad:2, duracion:200ms}
+    }
+
+    linea_completada : {
+        descripcion     : "Se activa al completar una línea"
+        efecto_puntuacion : 120
+        multiplicador_cadena : [1x,2x,4x,6x]
+        efecto_visual   : {tipo:"destello", color:"blanco", brillo:0.7, difusion:"media", parpadeo:{frecuencia:3, tiempo_total:0.8s}}
+        sonido          : "brillo_linea.wav"
+        volumen_sonido  : 0.6
+    }
+
+    nivel_subido : {
+        descripcion     : "Se activa al alcanzar el siguiente nivel"
+        incremento_velocidad : 0.07s
+        efecto_visual   : {tipo:"flash", color:"teal", ciclos:3, velocidad:"rapida"}
+        efecto_sonido  : "salto_pulso.wav"
+        volumen_sonido : 0.7
+        vibracion_tablero : {intensidad:3, duracion:150ms}
+    }
+}
+
+// ===================================
+// CONTROLES DEL JUGADOR
+// ===================================
+
+@Controles { //¿Existirá alguna otra forma de definirlo para que lo lea el programa?
+    moverIzquierda <= [A, ←]
+    moverDerecha   <= [D, →]
+    caidaSuave     <= [S, ↓]
+    caidaRapida    <= [Espacio]
+    girarDerecha   <= [E]
+    girarIzquierda <= [Q]
+    pausarJuego    <= [P]
+    activarRayo    <= [R]
+}
+
+// ===================================
+// CONDICIÓN DE DERROTA
+// ===================================
+
+@FinJuego {
+    si "pieza_no_puede_aparecer" -> terminar mostrarMensaje "¡Sobrecarga!"
+}
+
+// ===================================
+// EFECTOS VISUALES Y SONOROS
+// ===================================
+
+@Efectos { //Efectitos visuales para que todo se vea mejor (Posiblemente resulte en nada para acoplarnos al espacio del proyecto)
+
+    musica_fondo : {
+        archivo      : "pulsoEstelar.ogg"
+        volumen      : 0.8
+        bucle        : true
+        transicion   : {tipo:"desvanecer", tiempo:2.0s}
+    }
+
+    efecto_linea : {
+        archivo      : "brillo_claro.wav"
+        volumen      : 0.6
+        eco          : {intensidad:0.4, duracion:0.8s}
+        color_flash  : {tono:"blanco", brillo:0.7}
+    }
+
+    efecto_nivel : {
+        archivo      : "salto_pulso.wav"
+        volumen      : 0.7
+        vibracion    : {intensidad:3, duracion:150ms}
+        destello     : {color:"teal", expansion:1.5}
+    }
+
+    efecto_pieza : {
+        archivo      : "impacto_frag.wav"
+        volumen      : 0.5
+        reverb       : {mezcla:0.3, cola:0.5s}
+        chispas      : {color:"naranja", cantidad:6, tamaño:"pequeño"}
+    }
+
+    rastro_fantasma : {
+        tipo         : "particula"
+        color        : "cian"
+        duracion     : 1.2s
+        desvanecer   : true
+        velocidad    : "lenta"
+    }
+
+    destello_linea : {
+        tipo         : "luz"
+        color        : "blanco"
+        intensidad   : 0.6
+        difusion     : "media"
+        parpadeo     : {frecuencia:2, tiempo_total:0.8s}
+    }
+
+    parpadeo_nivel : {
+        tipo         : "flash"
+        color        : "azul"
+        ciclos       : 3
+        velocidad    : "rapida"
+        curva        : "suavizado"
+    }
+
+    aura_tablero : {
+        tipo         : "halo"
+        color        : "morado"
+        opacidad     : 0.2
+        pulso        : {amplitud:0.1, velocidad:5s}
+        radio        : "borde"
+    }
+
+    fondo_animado : {
+        archivo      : "nebulosa_movil"
+        desplazamiento: {direccion:"diagonal", velocidad:0.2}
+        brillo_estrellas : {intensidad:0.3, parpadeo:true}
+        ciclo_color  : {tonos:["azul","violeta","cian"], tiempo:20s}
+    }
+
+    vibracion_golpe : {
+        intensidad   : 2
+        duracion     : 120ms
+        curva        : "rebote"
+        direccion    : "aleatoria"
+    }
+}
