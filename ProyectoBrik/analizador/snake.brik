@@ -22,7 +22,6 @@ EVENT on_step {
   DO UPDATE_SCORE_DISPLAY
 }
 
-
 EVENT CHECK_COLLISIONS {
   IF COLLIDE_WALL snake THEN GAME_OVER reason="wall"
   IF COLLIDE_BODY snake THEN GAME_OVER reason="self"
